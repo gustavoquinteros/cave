@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Script InDesign</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+
+<input type="text" id="colorCode" placeholder="Digite o código de cor CMYK como 86,0,61,0" />
+<input type="text" id="fileName" placeholder="Digite o nome do arquivo" value="ChangeTextColor.jsx" />
+<button onclick="generateScript()">Gerar Script</button>
+
+<script>
+    function generateScript() {
+        var colorCode = document.getElementById('colorCode').value;
+        var fileName = document.getElementById('fileName').value;
+        var scriptContent = `
+// Criação de um novo cor swatch
+var myDocument = app.activeDocument;
+var myColor = myDocument.colors.add({name:"MyNewColor", model:ColorModel.process, colorValue:[${colorCode}]});
+
+// Alterando propriedades do texto dentro de todas as caixas de texto no artboard ativo
+for (var i = 0; i < myDocument.textFrames.length; i++) {
+    var myTextFrame = myDocument.textFrames[i];
+    if (myTextFrame.parent.constructor.name == "Spread") {  // Verificar se a caixa de texto está no artboard
+        var myText = myTextFrame.texts[0];
+        myText.fillColor = myColor;
+        myText.appliedFont = app.fonts.item("Bebas Neue");  // Alterar a família da fonte
+        myText.pointSize = 18;  // Alterar o tamanho da fonte
+        myText.justification = Justification.CENTER_ALIGN;  // Alterar o alinhamento para o centro
+    }
+}
+`;
+        var blob = new Blob([scriptContent], {type: "text/plain;charset=utf-8"});
+        saveAs(blob, fileName);
+    }
+</script>
+
+</body>
+</html>

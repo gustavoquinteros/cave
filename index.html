@@ -3,33 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Olá, Mundo!</title>
+    <title>Mensagem Animada</title>
     <style>
         body, html {
             height: 100%;
             margin: 0;
+            overflow: hidden;
             display: flex;
-            justify-content: center;
             align-items: center;
-            font-family: Arial, sans-serif;
+            justify-content: center;
         }
-        #hello-world {
+        #mensagem {
             font-size: 2em;
-            transition: color 1s;
+            display: none;
+        }
+        a {
+            font-size: 1.5em;
+            display: none;
+            position: absolute;
+            animation: move 5s linear infinite;
+        }
+        @keyframes move {
+            0% {top: 0; left: 0;}
+            25% {top: 0; left: calc(100% - 100px);}
+            50% {top: calc(100% - 20px); left: calc(100% - 100px);}
+            75% {top: calc(100% - 20px); left: 0;}
+            100% {top: 0; left: 0;}
         }
     </style>
 </head>
 <body>
 
-<div id="hello-world">Olá, Mundo!</div>
+<div id="mensagem">Você está pronto?</div>
+<a id="link" href="https://www.notion.so/PTO-Guidelines-8c851c8d8ed448ccb378d86259a79827?pvs=4" target="_blank">Clique aqui!</a>
 
 <script>
-    function changeColor() {
-        var colors = ['#FF5733', '#33FF57', '#3357FF', '#F333FF', '#FF3357'];
-        var colorIndex = Math.floor(Math.random() * colors.length);
-        document.getElementById('hello-world').style.color = colors[colorIndex];
+    function showLink() {
+        document.getElementById('mensagem').style.display = 'none';
+        const link = document.getElementById('link');
+        link.style.display = 'block';
+        changeColor(link);
     }
-    setInterval(changeColor, 1000); // Troca de cor a cada 1 segundo
+
+    function changeColor(element) {
+        const colors = ['#FF5733', '#33FF57', '#3357FF', '#F333FF', '#FF3357'];
+        let colorIndex = 0;
+        setInterval(() => {
+            element.style.color = colors[colorIndex];
+            colorIndex = (colorIndex + 1) % colors.length;
+        }, 1000);
+    }
+
+    window.onload = function() {
+        document.getElementById('mensagem').style.display = 'block';
+        setTimeout(showLink, 5000);
+    }
 </script>
 
 </body>

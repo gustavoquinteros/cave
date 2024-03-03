@@ -3,62 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mensagem Animada</title>
+    <title>Feed RSS do G1</title>
     <style>
-        body, html {
-            height: 100%;
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .item {
+            margin-bottom: 20px;
+        }
+        .item h2 {
+            margin: 0 0 5px 0;
+        }
+        .item p {
             margin: 0;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
-        #mensagem {
-            font-size: 2em;
-            display: none;
+        .item a {
+            text-decoration: none;
+            color: blue;
         }
-        a {
-            font-size: 1.5em;
-            display: none;
-            position: absolute;
-            animation: move 5s linear infinite;
-        }
-        @keyframes move {
-            0% {top: 0; left: 0;}
-            25% {top: 0; left: calc(100% - 100px);}
-            50% {top: calc(100% - 20px); left: calc(100% - 100px);}
-            75% {top: calc(100% - 20px); left: 0;}
-            100% {top: 0; left: 0;}
+        .item a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
+    <h1>Notícias do G1 Brasil</h1>
+    <div id="feed"></div>
 
-<div id="mensagem">Você está pronto?</div>
-<a id="link" href="https://www.notion.so/PTO-Guidelines-8c851c8d8ed448ccb378d86259a79827?pvs=4" target="_blank">Clique aqui!</a>
+    <script>
+        async function fetchRSSFeed() {
+            const proxyUrl = 'https://api.allorigins.win/get?url=';
+            const targetUrl = 'https://g1.globo.com/dynamo/brasil/rss2.xml';
+            const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
+            const data = await response.json();
 
-<script>
-    function showLink() {
-        document.getElementById('mensagem').style.display = 'none';
-        const link = document.getElementById('link');
-        link.style.display = 'block';
-        changeColor(link);
-    }
+            if (response.ok) {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(data.contents, "text/xml");
+                const items = xmlDoc.getElementsByTagName('item');
+                let htmlContent = '';
 
-    function changeColor(element) {
-        const colors = ['#FF5733', '#33FF57', '#3357FF', '#F333FF', '#FF3357'];
-        let colorIndex = 0;
-        setInterval(() => {
-            element.style.color = colors[colorIndex];
-            colorIndex = (colorIndex + 1) % colors.length;
-        }, 1000);
-    }
+                for (let item of items) {
+                    const title = item.getElementsByTagName('title')[0].textContent;
+                    const link = item.getElementsByTagName('link')[0].textContent;
+                    const pubDate = item.getElementsByTagName('pubDate')[0].textContent;
 
-    window.onload = function() {
-        document.getElementById('mensagem').style.display = 'block';
-        setTimeout(showLink, 5000);
-    }
-</script>
+                    htmlContent += `
+                        <div class="item">
+                            <h2><a href="${link}" target="_blank">${title}</a></h2>
+                            <p>${pubDate}</p>
+                        </div>
+                    `;
+                }
 
+                document.getElementById('feed').innerHTML = htmlContent;
+            } else {
+                document.getElementById('feed').innerHTML = "<p>Não foi possível carregar o feed.</p>";
+            }
+        }
+
+        fetchRSSFeed();
+    </script>
 </body>
 </html>

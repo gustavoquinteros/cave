@@ -1,69 +1,57 @@
-<!DOCTYPE html>
-<html lang="pt">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feed RSS do G1</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        .item {
-            margin-bottom: 20px;
-        }
-        .item h2 {
-            margin: 0 0 5px 0;
-        }
-        .item p {
-            margin: 0;
-        }
-        .item a {
-            text-decoration: none;
-            color: blue;
-        }
-        .item a:hover {
-            text-decoration: underline;
-        }
-    </style>
-</head>
-<body>
-    <h1>Notícias do G1 Brasil</h1>
-    <div id="feed"></div>
+const timerDisplay = document.querySelector('#timerDisplay');
+const startButton = document.querySelector('#startButton');
 
-    <script>
-        async function fetchRSSFeed() {
-            const proxyUrl = 'https://api.allorigins.win/get?url=';
-            const targetUrl = 'https://g1.globo.com/dynamo/brasil/rss2.xml';
-            const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
-            const data = await response.json();
+function startTimer(duration) {
+    let time = duration, minutes, seconds;
+    const endTime = Date.now() + duration * 1000; // Calcula o tempo de término
 
-            if (response.ok) {
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(data.contents, "text/xml");
-                const items = xmlDoc.getElementsByTagName('item');
-                let htmlContent = '';
+    const timerInterval = setInterval(() => {
+        const remaining = Math.round((endTime - Date.now()) / 1000);
+        minutes = parseInt(remaining / 60, 10);
+        seconds = parseInt(remaining % 60, 10);
 
-                for (let item of items) {
-                    const title = item.getElementsByTagName('title')[0].textContent;
-                    const link = item.getElementsByTagName('link')[0].textContent;
-                    const pubDate = item.getElementsByTagName('pubDate')[0].textContent;
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
 
-                    htmlContent += `
-                        <div class="item">
-                            <h2><a href="${link}" target="_blank">${title}</a></h2>
-                            <p>${pubDate}</p>
-                        </div>
-                    `;
-                }
+        timerDisplay.textContent = minutes + ":" + seconds;
 
-                document.getElementById('feed').innerHTML = htmlContent;
-            } else {
-                document.getElementById('feed').innerHTML = "<p>Não foi possível carregar o feed.</p>";
-            }
+        // Transição de cores
+        updateBackgroundColor(remaining);
+
+        if (remaining <= 0) {
+            clearInterval(timerInterval);
+            flashEffect();
         }
+    }, 1000);
+}
 
-        fetchRSSFeed();
-    </script>
-</body>
-</html>
+function updateBackgroundColor(timeLeft) {
+    let color;
+    if (timeLeft > 30) {
+        color = `rgba(0, 0, 139, ${timeLeft / timerDuration})`; // Azul escuro a Laranja
+    } else if (timeLeft <= 30 && timeLeft > 10) {
+        color = `rgba(255, 140, 0, ${timeLeft / 30})`; // Laranja
+    } else {
+        color = `rgba(255, 0, 0, ${timeLeft / 10})`; // Vermelho
+    }
+    document.body.style.backgroundColor = color;
+}
+
+function flashEffect() {
+    let flashTimes = 10; // Número de vezes para piscar
+    let isOn = false;
+    const flashInterval = setInterval(() => {
+        document.body.style.backgroundColor = isOn ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 0, 0, 1)';
+        isOn = !isOn;
+        if (--flashTimes === 0) {
+            clearInterval(flashInterval);
+            document.body.style.backgroundColor = 'rgba(255, 255, 255, 1)'; // Fica branco no final
+            timerDisplay.textContent = "Terminou";
+        }
+    }, 500);
+}
+
+startButton.addEventListener('click', () => {
+    const duration = 60; // Defina a duração do timer aqui
+    startTimer(duration);
+});

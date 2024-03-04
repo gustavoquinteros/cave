@@ -1,57 +1,111 @@
-const timerDisplay = document.querySelector('#timerDisplay');
-const startButton = document.querySelector('#startButton');
-
-function startTimer(duration) {
-    let time = duration, minutes, seconds;
-    const endTime = Date.now() + duration * 1000; // Calcula o tempo de término
-
-    const timerInterval = setInterval(() => {
-        const remaining = Math.round((endTime - Date.now()) / 1000);
-        minutes = parseInt(remaining / 60, 10);
-        seconds = parseInt(remaining % 60, 10);
-
-        minutes = minutes < 10 ? "0" + minutes : minutes;
-        seconds = seconds < 10 ? "0" + seconds : seconds;
-
-        timerDisplay.textContent = minutes + ":" + seconds;
-
-        // Transição de cores
-        updateBackgroundColor(remaining);
-
-        if (remaining <= 0) {
-            clearInterval(timerInterval);
-            flashEffect();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer Avançado</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #081229;
+            transition: background-color 1s;
+            font-family: Arial, sans-serif;
         }
-    }, 1000);
-}
+        #timerDisplay {
+            font-size: 48px;
+            color: #FFF;
+        }
+        #startButton {
+            display: block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <input type="number" id="timeInput" placeholder="Tempo em segundos" min="1" />
+        <div id="timerDisplay">00:00</div>
+        <button id="startButton">Iniciar</button>
+    </div>
 
-function updateBackgroundColor(timeLeft) {
-    let color;
-    if (timeLeft > 30) {
-        color = `rgba(0, 0, 139, ${timeLeft / timerDuration})`; // Azul escuro a Laranja
-    } else if (timeLeft <= 30 && timeLeft > 10) {
-        color = `rgba(255, 140, 0, ${timeLeft / 30})`; // Laranja
-    } else {
-        color = `rgba(255, 0, 0, ${timeLeft / 10})`; // Vermelho
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+    const timerDisplay = document.querySelector('#timerDisplay');
+    const startButton = document.querySelector('#startButton');
+    const timeInput = document.querySelector('#timeInput');
+
+    function startTimer(duration) {
+        let time = duration;
+        updateDisplay(time);
+
+        const timerInterval = setInterval(() => {
+            time--;
+            updateDisplay(time);
+            updateBackgroundColor(time, duration);
+
+            if (time <= 0) {
+                clearInterval(timerInterval);
+                flashEffect();
+                playEndSound();
+            }
+        }, 1000);
     }
-    document.body.style.backgroundColor = color;
-}
 
-function flashEffect() {
-    let flashTimes = 10; // Número de vezes para piscar
-    let isOn = false;
-    const flashInterval = setInterval(() => {
-        document.body.style.backgroundColor = isOn ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 0, 0, 1)';
-        isOn = !isOn;
-        if (--flashTimes === 0) {
-            clearInterval(flashInterval);
-            document.body.style.backgroundColor = 'rgba(255, 255, 255, 1)'; // Fica branco no final
-            timerDisplay.textContent = "Terminou";
+    function updateDisplay(time) {
+        const minutes = Math.floor(time / 60);
+        const seconds = time % 60;
+        timerDisplay.textContent = `${pad(minutes)}:${pad(seconds)}`;
+    }
+
+    function pad(number) {
+        return number < 10 ? '0' + number : number;
+    }
+
+    function updateBackgroundColor(time, total) {
+        const fraction = time / total;
+        if (fraction > 0.5) {
+            document.body.style.backgroundColor = `rgba(0, 0, 139, ${fraction})`;
+        } else if (fraction > 0.1) {
+            document.body.style.backgroundColor = `rgba(255, 140, 0, ${2 * fraction})`;
+        } else {
+            document.body.style.backgroundColor = `rgba(255, 0, 0, ${10 * fraction})`;
         }
-    }, 500);
-}
+    }
 
-startButton.addEventListener('click', () => {
-    const duration = 60; // Defina a duração do timer aqui
-    startTimer(duration);
+    function flashEffect() {
+        let flashTimes = 5;
+        let isOn = false;
+        const flashInterval = setInterval(() => {
+            document.body.style.backgroundColor = isOn ? 'rgba(255, 0, 0, 1)' : 'rgba(255, 255, 255, 1)';
+            isOn = !isOn;
+            if (--flashTimes === 0) {
+                clearInterval(flashInterval);
+                document.body.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+                timerDisplay.textContent = "Terminou!";
+            }
+        }, 500);
+    }
+
+    function playEndSound() {
+        const audio = new Audio('end-sound.mp3'); // Substitua 'end-sound.mp3' pelo caminho do seu arquivo de áudio
+        audio.play();
+    }
+
+    startButton.addEventListener('click', () => {
+        const duration = parseInt(timeInput.value, 10);
+        if (!isNaN(duration) && duration > 0) {
+            startTimer(duration);
+        } else {
+            alert('Por favor, insira um tempo válido em segundos.');
+        }
+    });
 });
+    </script>
+</body>
+</html>

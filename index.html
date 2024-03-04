@@ -1,143 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timer Elegante</title>
+    <title>Timer Futurista</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #f0f0f5;
-            color: #333;
+            margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
-            transition: background-color 1s;
+            background: linear-gradient(180deg, #000046, #1CB5E0);
+            transition: background 1s ease-out;
         }
-        #app {
-            text-align: center;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            background-color: #ffffff;
-            width: 300px;
+        .timer-wrapper {
+            position: relative;
+            width: 200px;
+            height: 200px;
         }
-        .time-input, .timer-display, .start-button {
-            width: 100%;
-            margin-top: 20px;
-            font-size: 20px;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
+        .timer-circle {
+            fill: none;
+            stroke: white;
+            stroke-width: 5;
+            stroke-dasharray: 630;
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear;
         }
-        .timer-display {
-            font-weight: bold;
-            font-size: 32px;
-            color: #333;
-        }
-        .start-button {
-            background-color: #007aff;
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .start-button:hover, .start-button:focus {
-            background-color: #005ecb;
-        }
-        .start-button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
+        .timer-text {
+            fill: white;
+            font-family: 'Arial', sans-serif;
+            font-size: 48px;
+            text-anchor: middle;
+            dominant-baseline: central;
         }
     </style>
 </head>
 <body>
-    <div id="app">
-        <input type="number" id="timeInput" class="time-input" placeholder="Tempo em segundos" min="1">
-        <div id="timerDisplay" class="timer-display">00:00</div>
-        <button id="startButton" class="start-button">Iniciar</button>
+    <div class="timer-wrapper">
+        <svg viewBox="0 0 200 200">
+            <circle class="timer-circle" cx="100" cy="100" r="100"></circle>
+            <text x="100" y="105" class="timer-text">00:00</text>
+        </svg>
     </div>
 
-    <script>class Timer {
-    constructor(displaySelector, startButtonSelector, inputSelector) {
-        this.timerDisplay = document.querySelector(displaySelector);
-        this.startButton = document.querySelector(startButtonSelector);
-        this.timeInput = document.querySelector(inputSelector);
-        this.interval = null;
-        this.totalTime = 0;
-        this.remainingTime = 0;
+    <script>
+        const timerCircle = document.querySelector('.timer-circle');
+        const timerText = document.querySelector('.timer-text');
+        let totalTime = 60; // Total time in seconds
 
-        this.startButton.addEventListener('click', () => this.start());
-    }
+        function startTimer(duration) {
+            let time = duration;
+            let initialOffset = 630; // The circumference of the circle
+            let currentOffset = initialOffset;
+            const interval = 1000;
+            const increment = initialOffset / duration;
+            
+            const timer = setInterval(() => {
+                const minutes = Math.floor(time / 60);
+                const seconds = time % 60;
+                timerText.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                time--;
 
-    start() {
-        this.totalTime = parseInt(this.timeInput.value, 10);
-        if (isNaN(this.totalTime) || this.totalTime <= 0) {
-            alert('Por favor, insira um tempo válido em segundos.');
-            return;
+                currentOffset -= increment;
+                timerCircle.style.strokeDashoffset = currentOffset;
+
+                // Update background to simulate day cycle
+                const percentage = (duration - time) / duration;
+                document.body.style.background = `linear-gradient(180deg, #000046 ${100 - percentage * 100}%, #1CB5E0 ${percentage * 100}%)`;
+
+                if (time < 0) {
+                    clearInterval(timer);
+                    document.body.style.background = `linear-gradient(180deg, #1CB5E0, #9CECFB)`;
+                    timerText.textContent = "Fim";
+                }
+            }, interval);
         }
 
-        this.remainingTime = this.totalTime;
-        this.updateDisplay(this.remainingTime);
-        this.startButton.disabled = true;
-
-        if (this.interval) clearInterval(this.interval);
-
-        this.interval = setInterval(() => {
-            this.remainingTime--;
-            this.updateDisplay(this.remainingTime);
-            this.updateBackgroundColor();
-
-            if (this.remainingTime <= 0) {
-                clearInterval(this.interval);
-                this.flashEffect();
-                this.playEndSound();
-                this.startButton.disabled = false;
-            }
-        }, 1000);
-    }
-
-    updateDisplay(time) {
-        const minutes = Math.floor(time / 60);
-        const seconds = time % 60;
-        this.timerDisplay.textContent = `${this.pad(minutes)}:${this.pad(seconds)}`;
-    }
-
-    pad(number) {
-        return number < 10 ? '0' + number : number;
-    }
-
-    updateBackgroundColor() {
-        const fraction = this.remainingTime / this.totalTime;
-        document.body.style.backgroundColor = `rgba(${255 - (fraction * 255)}, ${fraction * 255}, 0, 1)`;
-    }
-
-    flashEffect() {
-        let flashTimes = 10;
-        let isOn = false;
-        const flashInterval = setInterval(() => {
-            document.body.style.backgroundColor = isOn ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 0, 0, 1)';
-            isOn = !isOn;
-            if (--flashTimes === 0) {
-                clearInterval(flashInterval);
-                document.body.style.backgroundColor = 'rgba(255, 255, 255, 1)';
-                this.timerDisplay.textContent = "Terminou!";
-            }
-        }, 500);
-    }
-
-    playEndSound() {
-        // Substitua 'end-sound.mp3' pelo caminho do seu arquivo de áudio
-        const audio = new Audio('end-sound.mp3');
-        audio.play().catch(error => console.error("Erro ao reproduzir o som:", error));
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const timer = new Timer('#timerDisplay', '#startButton', '#timeInput');
-});
+        startTimer(totalTime);
     </script>
 </body>
 </html>

@@ -11,7 +11,7 @@
             align-items: center;
             height: 100vh;
             background: linear-gradient(180deg, #000046, #1CB5E0);
-            transition: background 1s ease-out;
+            transition: background 2s ease-out;
         }
         .timer-wrapper {
             position: relative;
@@ -22,7 +22,7 @@
             fill: none;
             stroke: white;
             stroke-width: 5;
-            stroke-dasharray: 630;
+            stroke-dasharray: 595.48; /* Circunferência de um círculo com raio de 95 */
             stroke-dashoffset: 0;
             transition: stroke-dashoffset 1s linear;
         }
@@ -38,7 +38,7 @@
 <body>
     <div class="timer-wrapper">
         <svg viewBox="0 0 200 200">
-            <circle class="timer-circle" cx="100" cy="100" r="100"></circle>
+            <circle cx="100" cy="100" r="95" class="timer-circle"></circle>
             <text x="100" y="105" class="timer-text">00:00</text>
         </svg>
     </div>
@@ -46,29 +46,30 @@
     <script>
         const timerCircle = document.querySelector('.timer-circle');
         const timerText = document.querySelector('.timer-text');
-        let totalTime = 60; // Total time in seconds
+        let totalTime = 60; // Tempo total em segundos
 
         function startTimer(duration) {
             let time = duration;
-            let initialOffset = 630; // The circumference of the circle
-            let currentOffset = initialOffset;
+            const initialOffset = 595.48;
+            let currentOffset = 0;
             const interval = 1000;
-            const increment = initialOffset / duration;
-            
+            timerCircle.style.strokeDashoffset = initialOffset;
+
             const timer = setInterval(() => {
+                time--;
                 const minutes = Math.floor(time / 60);
                 const seconds = time % 60;
                 timerText.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                time--;
+                
+                // Atualiza o deslocamento do traço para animar o círculo
+                currentOffset += initialOffset / duration;
+                timerCircle.style.strokeDashoffset = initialOffset - currentOffset;
 
-                currentOffset -= increment;
-                timerCircle.style.strokeDashoffset = currentOffset;
-
-                // Update background to simulate day cycle
+                // Atualiza o fundo para simular o ciclo do dia
                 const percentage = (duration - time) / duration;
                 document.body.style.background = `linear-gradient(180deg, #000046 ${100 - percentage * 100}%, #1CB5E0 ${percentage * 100}%)`;
 
-                if (time < 0) {
+                if (time <= 0) {
                     clearInterval(timer);
                     document.body.style.background = `linear-gradient(180deg, #1CB5E0, #9CECFB)`;
                     timerText.textContent = "Fim";
@@ -76,6 +77,7 @@
             }, interval);
         }
 
+        // Inicia o timer
         startTimer(totalTime);
     </script>
 </body>

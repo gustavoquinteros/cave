@@ -1,84 +1,65 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Timer Futurista</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to DOC</title>
     <style>
         body {
-            margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background: linear-gradient(180deg, #000046, #1CB5E0);
-            transition: background 2s ease-out;
+            background-color: black;
+            color: white;
+            margin: 0;
+            font-family: Arial, sans-serif;
         }
-        .timer-wrapper {
-            position: relative;
-            width: 200px;
+        .container {
+            text-align: center;
+        }
+        textarea {
+            width: 100%;
             height: 200px;
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
         }
-        .timer-circle {
-            fill: none;
-            stroke: white;
-            stroke-width: 5;
-            stroke-dasharray: 595.48; /* Circunferência de um círculo com raio de 95 */
-            stroke-dashoffset: 0;
-            transition: stroke-dashoffset 1s linear;
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
-        .timer-text {
-            fill: white;
-            font-family: 'Arial', sans-serif;
-            font-size: 48px;
-            text-anchor: middle;
-            dominant-baseline: central;
+        button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-    <div class="timer-wrapper">
-        <svg viewBox="0 0 200 200">
-            <circle cx="100" cy="100" r="95" class="timer-circle"></circle>
-            <text x="100" y="105" class="timer-text">00:00</text>
-        </svg>
+    <div class="container">
+        <textarea id="textInput" placeholder="Write something..."></textarea><br>
+        <button onclick="generateDoc()">Download as DOC</button>
     </div>
 
     <script>
-        const timerCircle = document.querySelector('.timer-circle');
-        const timerText = document.querySelector('.timer-text');
-        let totalTime = 60; // Tempo total em segundos
-
-        function startTimer(duration) {
-            let time = duration;
-            const initialOffset = 595.48;
-            let currentOffset = 0;
-            const interval = 1000;
-            timerCircle.style.strokeDashoffset = initialOffset;
-
-            const timer = setInterval(() => {
-                time--;
-                const minutes = Math.floor(time / 60);
-                const seconds = time % 60;
-                timerText.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                
-                // Atualiza o deslocamento do traço para animar o círculo
-                currentOffset += initialOffset / duration;
-                timerCircle.style.strokeDashoffset = initialOffset - currentOffset;
-
-                // Atualiza o fundo para simular o ciclo do dia
-                const percentage = (duration - time) / duration;
-                document.body.style.background = `linear-gradient(180deg, #000046 ${100 - percentage * 100}%, #1CB5E0 ${percentage * 100}%)`;
-
-                if (time <= 0) {
-                    clearInterval(timer);
-                    document.body.style.background = `linear-gradient(180deg, #1CB5E0, #9CECFB)`;
-                    timerText.textContent = "Fim";
-                }
-            }, interval);
+        function generateDoc() {
+            const textInput = document.getElementById('textInput').value;
+            const blob = new Blob(['\ufeff', textInput], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'document.doc';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
-
-        // Inicia o timer
-        startTimer(totalTime);
     </script>
 </body>
 </html>

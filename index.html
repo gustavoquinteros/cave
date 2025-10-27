@@ -1,95 +1,165 @@
-<!DOCTYPE html>
-<html lang="en">
+
+<!doctype html>
+<html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<title>Quiz Interativo Superior</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>
-  .question { font-size: 24px; font-weight: bold; margin: 20px 0; }
-  .box { padding: 20px; margin: 10px; cursor: pointer; transition: background-color 0.3s, transform 0.3s; }
-  .selected { background-color: #007bff; color: white; transform: scale(1.05); }
-  .correct { background-color: #28a745; color: white; }
-  .wrong { background-color: #dc3545; color: white; }
-  #file-input { margin-top: 20px; }
-  #result { margin-top: 20px; font-size: 20px; }
-  .invisible { visibility: hidden; }
-</style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Prototype - App de Treino</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --w:1080;
+      --h:1920;
+      --accent:#B7FF00; /* neon green used in UI */
+    }
+    *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+    html,body{height:100%; margin:0; background:#111; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;}
+    .frame{
+      position:fixed; inset:0; display:grid; place-items:center; padding:12px;
+      background:radial-gradient(1200px 900px at 50% -400px, #1b1b1b 15%, #0f0f0f 70%);
+    }
+    .phone{
+      position:relative;
+      width:min(100vw, calc(100vh * (1080/1920)));
+      height:calc(var(--h) * 1px);
+      transform-origin: top left;
+      /* scale to fit height */
+    }
+    /* We compute a responsive scale to ensure the 1080x1920 canvas fits */
+    @media (max-aspect-ratio: 1080/1920){
+      .phone{ height:100vh; width:calc(100vh * (1080/1920)); }
+    }
+    @media (min-aspect-ratio: 1080/1920){
+      .phone{ width:100vw; height:calc(100vw * (1920/1080)); }
+    }
+    .canvas{
+      position:relative; width:1080px; height:1920px; overflow:hidden; border-radius:36px; box-shadow:0 20px 80px rgba(0,0,0,.6);
+      border:1px solid #222;
+      background:#000;
+    }
+    .screen{position:absolute; inset:0; display:none;}
+    .screen.active{display:block;}
+    .screen img{width:100%; height:100%; object-fit:cover; image-rendering:-webkit-optimize-contrast;}
+    /* Hotspot helpers */
+    .hotspot{
+      position:absolute; border-radius:24px;
+      /* For dev debug, toggle outline by adding .debug to body */
+    }
+    body.debug .hotspot{ outline:2px dashed rgba(183,255,0,.6); background:rgba(183,255,0,.08); }
+    .hint{
+      position:absolute; left:50%; bottom:16px; transform:translateX(-50%); font-size:26px; color:#aaa; letter-spacing:.3px;
+      background:rgba(0,0,0,.6); padding:10px 16px; border-radius:12px; backdrop-filter: blur(4px);
+    }
+    .legend{
+      position:fixed; left:12px; bottom:12px; z-index:9; display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .legend button{
+      font:600 12px/1 Inter, system-ui; letter-spacing:.3px; border:1px solid #333; color:#ddd;
+      background:#181818; padding:8px 10px; border-radius:10px; cursor:pointer;
+    }
+    .legend button:active{ transform:scale(.98); }
+  </style>
 </head>
-<body class="container p-5">
-  <h1 class="text-center">Quiz Interativo Superior</h1>
-  <div id="question" class="question text-center"></div>
-  <div class="d-flex justify-content-center">
-    <div id="answer1" class="box btn btn-outline-primary w-50">Resposta 1</div>
-    <div id="answer2" class="box btn btn-outline-primary w-50">Resposta 2</div>
+<body>
+  <div class="frame">
+    <div class="phone">
+      <div class="canvas" id="canvas">
+        <!-- Screen 1: Fichas list -->
+        <section class="screen active" id="s1">
+          <img src="../IMG_7673.png" alt="Fichas" />
+          <!-- Tap 'Suor Ligeiro' card -->
+          <a class="hotspot" data-next="s2" style="left:60px; right:60px; top:770px; height:320px;"></a>
+          <!-- Tap 'Cima e Baixo 1' -->
+          <a class="hotspot" data-next="s2" style="left:60px; right:60px; top:1110px; height:300px;"></a>
+          <!-- Tap 'Cima e Baixo 2' -->
+          <a class="hotspot" data-next="s2" style="left:60px; right:60px; top:1430px; height:300px;"></a>
+        </section>
+
+        <!-- Screen 2: Lista de exercícios do 'Suor Ligeiro' -->
+        <section class="screen" id="s2">
+          <img src="../IMG_7674.png" alt="Suor Ligeiro - Lista" />
+          <!-- Back -->
+          <a class="hotspot" data-next="s1" style="left:18px; top:120px; width:180px; height:80px;"></a>
+          <!-- Tap primeiro item (Polichinelo) -->
+          <a class="hotspot" data-next="s3" style="left:40px; right:40px; top:350px; height:220px;"></a>
+          <!-- Tap qualquer outro item também leva ao detalhe -->
+          <a class="hotspot" data-next="s3" style="left:40px; right:40px; top:600px; height:220px;"></a>
+          <a class="hotspot" data-next="s3" style="left:40px; right:40px; top:840px; height:220px;"></a>
+          <a class="hotspot" data-next="s3" style="left:40px; right:40px; top:1080px; height:220px;"></a>
+          <a class="hotspot" data-next="s3" style="left:40px; right:40px; top:1320px; height:220px;"></a>
+          <a class="hotspot" data-next="s3" style="left:40px; right:40px; top:1560px; height:220px;"></a>
+        </section>
+
+        <!-- Screen 3: Detalhe do exercício -->
+        <section class="screen" id="s3">
+          <img src="../IMG_7675.png" alt="Polichinelo - Detalhe" />
+          <!-- Back -->
+          <a class="hotspot" data-next="s2" style="left:18px; top:120px; width:260px; height:80px;"></a>
+          <!-- Iniciar Sequência -->
+          <a class="hotspot" data-next="s4" style="left:60px; right:60px; bottom:430px; height:150px;"></a>
+        </section>
+
+        <!-- Screen 4: Timer -->
+        <section class="screen" id="s4">
+          <img src="../IMG_7676.png" alt="Polichinelo - Timer" />
+          <!-- Back (top arrows) -->
+          <a class="hotspot" data-next="s3" style="right:120px; top:100px; width:240px; height:90px;"></a>
+          <!-- Close (X) -->
+          <a class="hotspot" data-next="s1" style="left:40px; bottom:220px; width:140px; height:140px;"></a>
+          <!-- Pause (just loops back to detail for prototype) -->
+          <a class="hotspot" data-next="s3" style="right:56px; bottom:220px; width:140px; height:140px;"></a>
+        </section>
+      </div>
+    </div>
   </div>
-  <button id="confirm-btn" class="btn btn-success w-100 invisible" onclick="checkAnswer()">Confirmar Resposta</button>
-  <input type="file" id="file-input" class="form-control" onchange="loadExcelFile()">
-  <div id="result" class="text-center"></div>
 
-<script>
-  var currentQuestion = 0;
-  var score = 0;
-  var data = [];
+  <div class="legend" aria-hidden="true">
+    <button id="debugBtn">Alternar hotspots</button>
+    <button id="resetBtn">Voltar ao início</button>
+  </div>
 
-  function loadExcelFile() {
-    var file = document.getElementById('file-input').files[0];
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var workbook = XLSX.read(e.target.result, {
-        type: 'binary'
-      });
-      data = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-      displayQuestion();
-    };
-    reader.readAsBinaryString(file);
-  }
+  <script>
+    const canvas = document.getElementById('canvas');
+    const screens = [...canvas.querySelectorAll('.screen')];
+    const byId = id => canvas.querySelector('#'+id);
 
-  function displayQuestion() {
-    if (data.length === 0 || currentQuestion >= data.length) {
-      document.getElementById("result").innerHTML = `Quiz concluído. Acertos: ${score} de ${data.length}`;
-      return;
+    function go(nextId){
+      screens.forEach(s => s.classList.remove('active'));
+      byId(nextId).classList.add('active');
     }
-    resetAnswers();
-    document.getElementById("result").innerHTML = "";
-    var questionData = data[currentQuestion];
-    document.getElementById("question").innerHTML = questionData['Pergunta'];
-    var answers = [questionData['Resposta Certa'], questionData['Resposta Errada']];
-    answers.sort(() => Math.random() - 0.5);  // Embaralhar respostas
-    document.getElementById("answer1").innerHTML = answers[0];
-    document.getElementById("answer2").innerHTML = answers[1];
-    document.getElementById("answer1").onclick = function() { selectAnswer(this); };
-    document.getElementById("answer2").onclick = function() { selectAnswer(this); };
-  }
 
-  function resetAnswers() {
-    const boxes = document.querySelectorAll('.box');
-    boxes.forEach(box => {
-      box.classList.remove('selected', 'correct', 'wrong');
+    canvas.addEventListener('click', (e)=>{
+      const a = e.target.closest('.hotspot');
+      if(!a) return;
+      const next = a.getAttribute('data-next');
+      if(next) go(next);
+      e.preventDefault();
     });
-    document.getElementById("confirm-btn").classList.add('invisible');
-  }
 
-  function selectAnswer(element) {
-    resetAnswers();
-    element.classList.add('selected');
-    document.getElementById("confirm-btn").classList.remove('invisible');
-  }
+    // Helpers
+    document.getElementById('resetBtn').onclick = () => go('s1');
+    document.getElementById('debugBtn').onclick = () => document.body.classList.toggle('debug');
 
-  function checkAnswer() {
-    const selectedBox = document.querySelector('.box.selected');
-    const correctAnswer = data[currentQuestion]['Resposta Certa'];
-    if (selectedBox.innerHTML === correctAnswer) {
-      selectedBox.classList.add('correct');
-      document.getElementById("result").innerHTML = "Resposta correta!";
-      score++;
-    } else {
-      selectedBox.classList.add('wrong');
-      document.getElementById("result").innerHTML = "Resposta incorreta.";
-    }
-    currentQuestion++;
-    setTimeout(displayQuestion, 2000);
-  }
-</script>
+    // Basic swipe left/right to go back/forward-ish (optional)
+    let sx=0, sy=0, dx=0, dy=0;
+    canvas.addEventListener('touchstart', e => { const t=e.touches[0]; sx=t.clientX; sy=t.clientY; });
+    canvas.addEventListener('touchmove', e => { const t=e.touches[0]; dx=t.clientX-sx; dy=t.clientY-sy; });
+    canvas.addEventListener('touchend', e => {
+      if(Math.abs(dx) > 120 && Math.abs(dx) > Math.abs(dy)){
+        // swipe right = back
+        if(dx>0){
+          const active = canvas.querySelector('.screen.active').id;
+          if(active==='s2') go('s1');
+          else if(active==='s3') go('s2');
+          else if(active==='s4') go('s3');
+        }
+      }
+      dx=dy=0;
+    });
+
+    // Preload images
+    ['../IMG_7673.png','../IMG_7674.png','../IMG_7675.png','../IMG_7676.png'].forEach(src=>{ const i=new Image(); i.src=src; });
+  </script>
 </body>
 </html>
